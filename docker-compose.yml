@@ -8,3 +8,16 @@ services:
       - "8000:8000"
     volumes:
       - "./docker/dynamodb:/home/dynamodblocal/data"
+
+  dynamodb-init:
+    image: amazon/aws-cli:latest
+    container_name: dynamodb-init
+    depends_on:
+      - dynamodb-local
+    environment:
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+      AWS_DEFAULT_REGION: eu-west-1
+    entrypoint: [ "/bin/sh", "/scripts/create-tables.sh" ]
+    volumes:
+      - "./scripts:/scripts"
