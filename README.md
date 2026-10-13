@@ -1,6 +1,115 @@
-## Para levantarlo:
-1. Docker Desktop arrancado
-2. Abrir terminal en la carpeta raíz del proyecto
-3. Ejecutar el comando `docker compose up -d` para levantar DynamoDB Local 
-[***Nota***: -d (*detached*): para que se ejecute en segundo plano]
-4. 
+# infraestructure
+
+Infraestructura local compartida por los microservicios:
+
+- [wipay-client](https://github.com/pablomenapetroprix/client-microservice): gestión de clientes
+- [wipay-merchant](https://github.com/pablomenapetroprix/merchant-microservice): gestión de merchants
+
+Levanta una instancia de **DynamoDB Local** con Docker y crea automáticamente la tabla única `MainTable` que utilizan los dos microservicios.
+
+## Servicios
+
+| Servicio | Imagen | Puerto | Descripción |
+|---|---|---|---|
+| `dynamodb-local` | `amazon/dynamodb-local` | `8000` | Base de datos DynamoDB en local. Los datos se guardan en `docker/dynamodb/`. |
+| `dynamodb-init` | `amazon/aws-cli` | — | Ejecuta `scripts/create-tables.sh` para crear `MainTable` y termina (`Exited (0)`). |
+
+## Cómo levantarlo
+
+Desde la raíz de este repositorio:
+
+```
+docker compose up -d
+```
+
+> `-d` (*detached*) ejecuta los contenedores en segundo plano.
+
+Comprobar que DynamoDB Local está en marcha:
+
+```
+docker ps
+```
+
+Comprobar que la tabla se ha creado:
+
+```
+docker compose logs dynamodb-init
+```
+
+La primera vez muestra la descripción de la tabla y `Tabla MainTable creada`. Las siguientes, `La tabla MainTable ya existe`.
+
+### Otros comandos útiles
+
+| Comando | Qué hace |
+|---|---|
+| `docker compose stop` | Detiene los contenedores sin borrarlos. Los datos se conservan. |
+| `docker compose down` | Detiene y elimina los contenedores. Los datos se conservan en `docker/dynamodb/`. |
+| `docker compose up -d --remove-orphans` | Levanta los servicios y elimina contenedores de servicios que ya no están en el compose. |
+
+## Diseño de `MainTable`
+
+Clientes y merchants se guardan en la misma tabla y se distinguen por el valor de sus claves.
+
+### Clave primaria
+
+**PK** (Partition key) y **SK** (Sort key)
+
+### Índice secundario global `gIndex2`
+
+
+### Ejemplo de datos
+
+| PK | SK | gIndex2Pk | name |
+|---|---|---|---|
+| `CLIENT#c1` | `CLIENT#c1` | `CLIENT` | Wipay |
+| `MERCHANT#m1` | `MERCHANT#m1` | `CLIENT#c1` | Tienda Pepe |
+| `MERCHANT#m2` | `MERCHANT#m2` | `CLIENT#c1` | Banco Pepe |
+
+- **¿Cuáles son los merchants del cliente `c1`?** -> *Query* sobre `gIndex2` con `gIndex2Pk = CLIENT#c1`.
+- **¿A quién pertenece el merchant `m1`?** -> Leer `m1` por su clave y consultar su `gIndex2Pk`.
+
+## ¿Por qué un script para crear la tabla?
+
+DynamoDB Local arranca **vacío**, sin ninguna tabla, y los microservicios necesitan que `MainTable` exista.
+
+Crear la tabla a mano no deja constancia en ningún sitio: si se borra `docker/dynamodb/`, se cambia de equipo o alguien clona el repositorio, hay que volver a crearla con las mismas claves y el mismo índice, y es fácil equivocarse.
+
+El script `scripts/create-tables.sh`:
+
+1. **Espera** a que DynamoDB Local acepte peticiones. `depends_on` solo garantiza que el contenedor ha arrancado, no que esté listo.
+2. **Es idempotente**: si la tabla ya existe, no hace nada.
+3. **Crea** la tabla con su clave primaria y el índice `gIndex2`.
+
+Así la infraestructura es **reproducible**: el mismo comando da siempre el mismo resultado en cualquier equipo.
+
+> **ADVERTENCIA:** El script debe guardarse con saltos de línea `LF`, porque se ejecuta en Linux dentro del contenedor. El fichero `.gitattributes` lo garantiza en Git.
+> 
+> En IntelliJ, en la parte inferior derecha, cambiar de `CRLF` a `LF` y hacer commit.
+
+## Conexión a la base de datos
+
+| Desde | Endpoint |
+|---|---|
+| Tu máquina (microservicios, IntelliJ, NoSQL Workbench) | `http://localhost:8000` |
+| Otro contenedor de este `docker-compose` | `http://dynamodb-local:8000` |
+
+- **Región:** `eu-west-1`
+- **Credenciales:** cualquier valor (por ejemplo, `local` / `local`). DynamoDB Local no las valida.
+
+DynamoDB Local se ejecuta con la opción `-sharedDb`, así que **todos los clientes ven la misma base de datos**, aunque usen credenciales o regiones distintas.
+
+## Herramientas para consultar los datos
+
+### IntelliJ IDEA
+
+1. Abrir el panel lateral **DynamoDB**.
+2. Añadir una conexión local con endpoint `http://localhost:8000` y región `eu-west-1`.
+3. Refrescar para ver `MainTable` y su índice `gIndex2`.
+
+### NoSQL Workbench
+
+1. **Operation builder → Add connection → DynamoDB local**.
+2. Hostname `localhost`, puerto `8000`.
+
+> NoSQL Workbench incluye su propio DynamoDB Local (interruptor *DDB local*), que también usa el puerto `8000`. **Debe estar desactivado**: si no, entra en conflicto con el contenedor de Docker.
+
