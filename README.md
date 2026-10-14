@@ -2,8 +2,8 @@
 
 Infraestructura local compartida por los microservicios:
 
-- [wipay-client](https://github.com/pablomenapetroprix/client-microservice): gestión de clientes
-- [wipay-merchant](https://github.com/pablomenapetroprix/merchant-microservice): gestión de merchants
+- [client-microservice](https://github.com/tareas-practicas-wipay/client-microservice): gestión de clientes
+- [merchant-microservice](https://github.com/tareas-practicas-wipay/merchant-microservice): gestión de comercios (merchants)
 
 Levanta una instancia de **DynamoDB Local** con Docker y crea automáticamente la tabla única `MainTable` que utilizan los dos microservicios.
 
