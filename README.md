@@ -59,14 +59,12 @@ Clientes y merchants se guardan en la misma tabla y se distinguen por el valor d
 
 ### Ejemplo de datos
 
-| PK | SK | gIndex2Pk | name |
+| PK | SK | gIndex2Pk | keywordsSearch |
 |---|---|---|---|
-| `CLIENT#c1` | `CLIENT#c1` | `CLIENT` | Wipay |
-| `MERCHANT#m1` | `MERCHANT#m1` | `CLIENT#c1` | Tienda Pepe |
-| `MERCHANT#m2` | `MERCHANT#m2` | `CLIENT#c1` | Banco Pepe |
-
-- **¿Cuáles son los merchants del cliente `c1`?** -> *Query* sobre `gIndex2` con `gIndex2Pk = CLIENT#c1`.
-- **¿A quién pertenece el merchant `m1`?** -> Leer `m1` por su clave y consultar su `gIndex2Pk`.
+| `CLIENT#c1` | `CLIENTDATA` | `CLIENTMAIL#info@wipay.com` | Wipay |
+| `CLIENT#c1` | `MERCHANT#m1` | `MERCHANT#m1` | Tienda Pepe |
+| `CLIENT#c1`  | `MERCHANT#m2`  | `MERCHANT#m2` | Banco Pepe   |
+| `CLIENT#c2`  | `CLIENTDATA`   | `CLIENTMAIL#hola@paypal.com`   | Paypal |
 
 ## ¿Por qué un script para crear la tabla?
 
