@@ -61,10 +61,10 @@ Clientes y merchants se guardan en la misma tabla y se distinguen por el valor d
 
 | PK | SK | gIndex2Pk | keywordsSearch |
 |---|---|---|---|
-| `CLIENT#c1` | `CLIENTDATA` | `CLIENTMAIL#info@wipay.com` | Wipay |
+| `CLIENT#c1` | `CLIENTDATA` | `CLIENTEMAIL#info@wipay.com` | Wipay |
 | `CLIENT#c1` | `MERCHANT#m1` | `MERCHANT#m1` | Tienda Pepe |
 | `CLIENT#c1`  | `MERCHANT#m2`  | `MERCHANT#m2` | Banco Pepe   |
-| `CLIENT#c2`  | `CLIENTDATA`   | `CLIENTMAIL#hola@paypal.com`   | Paypal |
+| `CLIENT#c2`  | `CLIENTDATA`   | `CLIENTEMAIL#hola@paypal.com`   | Paypal |
 
 ## ¿Por qué un script para crear la tabla?
 
