@@ -48,23 +48,34 @@ La primera vez muestra la descripción de la tabla y `Tabla MainTable creada`. L
 
 ## Diseño de `MainTable`
 
-Clientes y merchants se guardan en la misma tabla y se distinguen por el valor de sus claves.
+Clientes y merchants se guardan en la misma tabla y se distinguen por el valor de sus claves. Cada merchant se guarda dentro de la partición de su cliente.
 
 ### Clave primaria
 
-**PK** (Partition key) y **SK** (Sort key)
+| Atributo | Rol |
+|---|---|
+| `PK` | Partition key |
+| `SK` | Sort key |
 
-### Índice secundario global `gIndex2`
+### Índices secundarios globales
 
+| Índice | Partition key | Sort key | Para qué |
+|---|---|---|---|
+| `gIndex2` | `gIndex2Pk` | `SK` | Buscar un cliente por email y un merchant por id |
+| `gIndex3` | `gIndex3Pk` | `SK` | Buscar por tipo de entidad (todos los clientes o todos los merchants) sin recorrer la tabla |
+
+Los dos índices proyectan todos los atributos (`ProjectionType: ALL`).
 
 ### Ejemplo de datos
 
-| PK | SK | gIndex2Pk | keywordsSearch |
-|---|---|---|---|
-| `CLIENT#c1` | `CLIENTDATA` | `CLIENTEMAIL#info@wipay.com` | Wipay |
-| `CLIENT#c1` | `MERCHANT#m1` | `MERCHANT#m1` | Tienda Pepe |
-| `CLIENT#c1`  | `MERCHANT#m2`  | `MERCHANT#m2` | Banco Pepe   |
-| `CLIENT#c2`  | `CLIENTDATA`   | `CLIENTEMAIL#hola@paypal.com`   | Paypal |
+| PK | SK | gIndex2Pk | gIndex3Pk | keywordsSearch |
+|---|---|---|---|---|
+| `CLIENT#c1` | `CLIENTDATA` | `CLIENTEMAIL#info@wipay.com` | `ENTITY#CLIENT` | `wipay` |
+| `CLIENT#c1` | `MERCHANT#m1` | `MERCHANT#m1` | `ENTITY#MERCHANT` | `tienda pepe` |
+| `CLIENT#c1` | `MERCHANT#m2` | `MERCHANT#m2` | `ENTITY#MERCHANT` | `banco pepe` |
+| `CLIENT#c2` | `CLIENTDATA` | `CLIENTEMAIL#hola@paypal.com` | `ENTITY#CLIENT` | `paypal` |
+
+`keywordsSearch` guarda el nombre en minúsculas para poder buscar sin distinguir mayúsculas.
 
 ## ¿Por qué un script para crear la tabla?
 
@@ -76,8 +87,8 @@ El script `scripts/create-tables.sh`:
 
 1. **Espera** a que DynamoDB Local acepte peticiones. `depends_on` solo garantiza que el contenedor ha arrancado, no que esté listo.
 2. **Es idempotente**: si la tabla ya existe, no hace nada.
-3. **Crea** la tabla con su clave primaria y el índice `gIndex2`.
-
+3. **Crea** la tabla con su clave primaria y los índices `gIndex2` y `gIndex3`.
+4. 
 Así la infraestructura es **reproducible**: el mismo comando da siempre el mismo resultado en cualquier equipo.
 
 > **ADVERTENCIA:** El script debe guardarse con saltos de línea `LF`, porque se ejecuta en Linux dentro del contenedor. El fichero `.gitattributes` lo garantiza en Git.
@@ -102,7 +113,7 @@ DynamoDB Local se ejecuta con la opción `-sharedDb`, así que **todos los clien
 
 1. Abrir el panel lateral **DynamoDB**.
 2. Añadir una conexión local con endpoint `http://localhost:8000` y región `eu-west-1`.
-3. Refrescar para ver `MainTable` y su índice `gIndex2`.
+3. Refrescar para ver `MainTable` y sus índices `gIndex2` y `gIndex3`.
 
 ### NoSQL Workbench
 
