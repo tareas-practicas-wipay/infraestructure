@@ -21,17 +21,29 @@ aws dynamodb create-table \
       AttributeName=PK,AttributeType=S \
       AttributeName=SK,AttributeType=S \
       AttributeName=gIndex2Pk,AttributeType=S \
+    --attribute-definitions \
+        AttributeName=PK,AttributeType=S \
+        AttributeName=SK,AttributeType=S \
+        AttributeName=gIndex2Pk,AttributeType=S \
+        AttributeName=gIndex3Pk,AttributeType=S \
   --key-schema \
       AttributeName=PK,KeyType=HASH \
       AttributeName=SK,KeyType=RANGE \
   --global-secondary-indexes '[{
-      "IndexName": "gIndex2",
-      "KeySchema": [
-        {"AttributeName": "gIndex2Pk", "KeyType": "HASH"},
-        {"AttributeName": "SK", "KeyType": "RANGE"}
-      ],
-      "Projection": {"ProjectionType": "ALL"}
-    }]' \
+        "IndexName": "gIndex2",
+        "KeySchema": [
+          {"AttributeName": "gIndex2Pk", "KeyType": "HASH"},
+          {"AttributeName": "SK", "KeyType": "RANGE"}
+        ],
+        "Projection": {"ProjectionType": "ALL"}
+      }, {
+        "IndexName": "gIndex3",
+        "KeySchema": [
+          {"AttributeName": "gIndex3Pk", "KeyType": "HASH"},
+          {"AttributeName": "SK", "KeyType": "RANGE"}
+        ],
+        "Projection": {"ProjectionType": "ALL"}
+      }]' \
   --billing-mode PAY_PER_REQUEST \
   --endpoint-url "$ENDPOINT"
 
